@@ -1,0 +1,10 @@
+# Ros build
+build
+install
+log
+
+# IntelliJ project files
+.idea
+*.iml
+out
+gen

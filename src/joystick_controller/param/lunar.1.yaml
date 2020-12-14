@@ -1,0 +1,5 @@
+joystick_publisher:
+  ros__parameters:
+    device: "/dev/input/event25"
+    max_linear: 0.3
+    max_angular: 1.82

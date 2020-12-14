@@ -1,0 +1,17 @@
+imu_publisher:
+  ros__parameters:
+    smbus: 1
+
+    adxl345:
+      addr: 0x53
+      data_rate: 800
+      g_range: 16
+      full_resolution: True
+
+    itg3200:
+      addr: 0x68
+
+    hmc5883l:
+      addr: 0x1E
+      gauss: 1.3
+      declination: [-5, 47]

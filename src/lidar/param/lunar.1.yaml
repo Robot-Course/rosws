@@ -1,0 +1,4 @@
+delta_2a_lidar_publisher:
+  ros__parameters:
+    serial_port: "/dev/ttyUSB0"
+    frame_id: "lidar"

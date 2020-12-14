@@ -1,0 +1,29 @@
+motor_publisher:
+  ros__parameters:
+    pid:
+      kp: 0.6
+      ki: 0.3
+      kd: 0.9
+
+    max_linear: 0.3
+    max_angular: 1.82
+
+    wheels:
+      separation: 0.168
+      radius: 0.033
+
+    motor:
+      rpm: 500
+      precision: 390
+      left:
+        in1: 26
+        in2: 19
+        encoder:
+          a: 27
+          b: 17
+      right:
+        in1: 16
+        in2: 20
+        encoder:
+          a: 18
+          b: 23
