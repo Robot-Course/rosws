@@ -15,6 +15,7 @@ def generate_launch_description():
     parser.add_argument('--imu', action='store_true', default=False)
     parser.add_argument('--motor', action='store_true', default=False)
     parser.add_argument('--lidar', action='store_true', default=False)
+    parser.add_argument('--joystick', action='store_true', default=False)
     args, _ = parser.parse_known_args()
 
     descriptions = []
@@ -54,6 +55,18 @@ def generate_launch_description():
             package='lidar',
             node_executable='delta_lidar_node',
             parameters=[lidar_param_file]))
+
+    if args.joystick or args.all:
+        joystick_param_file = LaunchConfiguration(
+            'joystick_param_file',
+            default=os.path.join(
+                get_package_share_directory('joystick_controller'),
+                'param',
+                args.robot_model + '.yaml'))
+        descriptions.append(Node(
+            package='joystick_controller',
+            node_executable='node',
+            parameters=[joystick_param_file]))
 
     bridge_launch_dir = LaunchConfiguration(
         'bridge_launch_dir',

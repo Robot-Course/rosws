@@ -16,7 +16,17 @@ class JoystickPublisher(Node):
         self.declare_parameter('max_angular')
 
         self.publisher = self.create_publisher(Twist, 'cmd_vel', QoSProfile(depth=100))
-        self.device = evdev.InputDevice(self.get_parameter('device').get_parameter_value().string_value)
+
+        self.device = None
+        devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
+        for device in devices:
+            if device.name == self.get_parameter('device').get_parameter_value().string_value:
+                self.device = device
+            else:
+                device.close()
+
+        assert self.device is not None, '"%s" is not found.' % self.get_parameter('device').get_parameter_value().string_value
+
         self.max_linear = self.get_parameter('max_linear').get_parameter_value().double_value
         self.max_angular = self.get_parameter('max_angular').get_parameter_value().double_value
 

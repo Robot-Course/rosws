@@ -1,5 +1,6 @@
 joystick_publisher:
   ros__parameters:
-    device: "/dev/input/event25"
+    # cat /proc/bus/input/devices
+    device: "Xbox One Wireless Controller"
     max_linear: 0.3
     max_angular: 1.82

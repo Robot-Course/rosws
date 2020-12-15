@@ -8,6 +8,7 @@ Source code of ROS Module for Robot Course, based on ROS 2.
 2. `cd rosws`
 3. `colcon build`
 4. `source install/local_setup.bash`
+5. `echo 'source install/local_setup.bash' >> ~/.bashrc`
 
 ## Run
 
