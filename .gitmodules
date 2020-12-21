@@ -2,3 +2,7 @@
 	path = src/rosbridge_suite
 	url = https://github.com/RobotWebTools/rosbridge_suite.git
 	branch = ros2
+[submodule "src/vision_opencv"]
+	path = src/vision_opencv
+	url = https://github.com/ros-perception/vision_opencv.git
+	branch = ros2

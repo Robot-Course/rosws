@@ -16,6 +16,7 @@ def generate_launch_description():
     parser.add_argument('--motor', action='store_true', default=False)
     parser.add_argument('--lidar', action='store_true', default=False)
     parser.add_argument('--joystick', action='store_true', default=False)
+    parser.add_argument('--camera', action='store_true', default=False)
     args, _ = parser.parse_known_args()
 
     descriptions = []
@@ -67,6 +68,11 @@ def generate_launch_description():
             package='joystick_controller',
             node_executable='node',
             parameters=[joystick_param_file]))
+
+    if args.camera or args.all:
+        descriptions.append(Node(
+            package='camera',
+            node_executable='node'))
 
     bridge_launch_dir = LaunchConfiguration(
         'bridge_launch_dir',
