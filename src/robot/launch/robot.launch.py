@@ -1,78 +1,65 @@
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import FrontendLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
 from ament_index_python.packages import get_package_share_directory
 from launch_ros.actions import Node
 import os
-import argparse
 
 
 def generate_launch_description():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--robot-model', type=str, default='lunar.1')
-    parser.add_argument('--all', action='store_true', default=False)
-    parser.add_argument('--imu', action='store_true', default=False)
-    parser.add_argument('--motor', action='store_true', default=False)
-    parser.add_argument('--lidar', action='store_true', default=False)
-    parser.add_argument('--joystick', action='store_true', default=False)
-    parser.add_argument('--camera', action='store_true', default=False)
-    args, _ = parser.parse_known_args()
+    ROBOT_MODEL = os.getenv('ROBOT_MODEL', 'lunar.1')
 
-    descriptions = []
-
-    if args.imu or args.all:
-        imu_param_file = LaunchConfiguration(
-            'imu_param_file',
-            default=os.path.join(
-                get_package_share_directory('imu'),
-                'param',
-                args.robot_model + '.yaml'))
-        descriptions.append(Node(
+    descriptions = [
+        DeclareLaunchArgument('imu', default_value='false'),
+        Node(
             package='imu',
             node_executable='node',
-            parameters=[imu_param_file]))
+            parameters=[LaunchConfiguration('imu_param_file',
+                                            default=os.path.join(get_package_share_directory('imu'), 'param',
+                                                                 ROBOT_MODEL + '.yaml'))],
+            condition=IfCondition(LaunchConfiguration('imu'))
+        ),
 
-    if args.motor or args.all:
-        motor_param_file = LaunchConfiguration(
-            'motor_param_file',
-            default=os.path.join(
-                get_package_share_directory('motor'),
-                'param',
-                args.robot_model + '.yaml'))
-        descriptions.append(Node(
+        DeclareLaunchArgument('motor', default_value='false'),
+        Node(
             package='motor',
             node_executable='node',
-            parameters=[motor_param_file]))
+            parameters=[LaunchConfiguration('motor_param_file',
+                                            default=os.path.join(get_package_share_directory('motor'), 'param',
+                                                                 ROBOT_MODEL + '.yaml'))],
+            condition=IfCondition(LaunchConfiguration('motor'))
+        ),
 
-    if args.lidar or args.all:
-        lidar_param_file = LaunchConfiguration(
-            'lidar_param_file',
-            default=os.path.join(
-                get_package_share_directory('lidar'),
-                'param',
-                args.robot_model + '.yaml'))
-        descriptions.append(Node(
+        DeclareLaunchArgument('lidar', default_value='false'),
+        Node(
             package='lidar',
             node_executable='delta_lidar_node',
-            parameters=[lidar_param_file]))
+            parameters=[LaunchConfiguration('lidar_param_file',
+                                            default=os.path.join(get_package_share_directory('lidar'),'param',
+                                                                 ROBOT_MODEL + '.yaml'))],
+            condition=IfCondition(LaunchConfiguration('lidar'))
+        ),
 
-    if args.joystick or args.all:
-        joystick_param_file = LaunchConfiguration(
-            'joystick_param_file',
-            default=os.path.join(
-                get_package_share_directory('joystick_controller'),
-                'param',
-                args.robot_model + '.yaml'))
-        descriptions.append(Node(
+        DeclareLaunchArgument('joystick', default_value='false'),
+        Node(
             package='joystick_controller',
             node_executable='node',
-            parameters=[joystick_param_file]))
+            parameters=[LaunchConfiguration('joystick_param_file',
+                                            default=os.path.join(get_package_share_directory('joystick_controller'),
+                                                                 'param',
+                                                                 ROBOT_MODEL + '.yaml'))],
+            condition=IfCondition(LaunchConfiguration('joystick'))
+        ),
 
-    if args.camera or args.all:
-        descriptions.append(Node(
+        DeclareLaunchArgument('camera', default_value='false'),
+        Node(
             package='camera',
-            node_executable='node'))
+            node_executable='node',
+            condition=IfCondition(LaunchConfiguration('camera'))
+        )
+    ]
 
     bridge_launch_dir = LaunchConfiguration(
         'bridge_launch_dir',
