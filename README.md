@@ -12,10 +12,10 @@ Source code of ROS Module for Robot Course, based on ROS 2.
 
 ## Run
 
-`ros2 launch robot robot.launch.py --all`
+`ros2 launch robot robot.launch.py lidar:=true` to start lidar only.
 
 or
 
-`ros2 launch robot robot.launch.py --imu --motor`
+`ros2 launch robot robot.launch.py imu:=true motor:=true` to start imu and motor together.
 
 etc.
