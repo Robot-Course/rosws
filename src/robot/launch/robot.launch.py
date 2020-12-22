@@ -66,7 +66,10 @@ def generate_launch_description():
         default=os.path.join(get_package_share_directory('rosbridge_server'), 'launch'))
 
     descriptions.append(IncludeLaunchDescription(
-            FrontendLaunchDescriptionSource([bridge_launch_dir, '/rosbridge_websocket_launch.xml'])
-        ))
+        FrontendLaunchDescriptionSource([bridge_launch_dir, '/rosbridge_websocket_launch.xml']),
+        launch_arguments=[
+            ('max_message_size', '10000')
+        ]
+    ))
 
     return LaunchDescription(descriptions)
