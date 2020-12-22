@@ -53,7 +53,7 @@ class ScanPublisher : public rclcpp::Node {
             robotics_lidar->initilize(serial_connect);
 
             start_scan_time = this->now();
-            publisher = this->create_publisher<sensor_msgs::msg::LaserScan>("scan", rclcpp::QoS(rclcpp::SensorDataQoS()));
+            publisher = this->create_publisher<sensor_msgs::msg::LaserScan>("scan", 100);
             timer = this->create_wall_timer(50us, std::bind(&ScanPublisher::poll, this));
         }
 
