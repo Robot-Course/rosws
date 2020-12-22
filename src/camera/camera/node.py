@@ -20,7 +20,7 @@ class CameraPublisher(Node):
         if ret:
             msg = self.br.cv2_to_compressed_imgmsg(frame, 'jpg')  # Convert the image to a message
             self.publisher_.publish(msg)
-            self.get_logger().info('Publishing: "%s"' % frame.size)
+            # self.get_logger().info('Publishing: "%s"' % frame.size)
 
     def close(self):
         self.cap.release()
