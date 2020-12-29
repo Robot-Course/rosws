@@ -65,7 +65,7 @@ class HMC5883L:
         # headingRad = math.atan2(y, x)
         mag_x = x * math.cos(pitch) + y * math.sin(roll) * math.sin(pitch) + z * math.cos(roll) * math.sin(pitch)
         mag_y = y * math.cos(roll) - z * math.sin(roll)
-        headingRad = math.atan2(-mag_y, mag_x)
+        headingRad = math.atan2(mag_y, mag_x)
         headingRad += self.__declination
 
         # Correct for reversed heading
