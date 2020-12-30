@@ -62,6 +62,9 @@ class HMC5883L:
 
     def heading(self, pitch, roll):
         (x, y, z) = self.read_data()
+        x *= 9.8
+        y *= 9.8
+        z *= 9.8
         # headingRad = math.atan2(y, x)
         mag_x = x * math.cos(pitch) + y * math.sin(roll) * math.sin(pitch) + z * math.cos(roll) * math.sin(pitch)
         mag_y = y * math.cos(roll) - z * math.sin(roll)
