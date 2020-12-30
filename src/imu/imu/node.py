@@ -29,7 +29,7 @@ class IMUPublisher(Node):
         self.dt = self.declare_parameter('dt').get_parameter_value().double_value
 
         self.beta = math.sqrt(3 / 4) * math.pi * (10 / 180)
-        self.orientation = Quaternion(w=1)
+        self.orientation = Quaternion(w=1.0)
 
         self.smbus = self.get_parameter('smbus').get_parameter_value().integer_value
 
