@@ -21,6 +21,7 @@
 
 import smbus
 import time
+import math
 
 
 def int_sw_swap(x):
@@ -78,7 +79,7 @@ class ITG3200(object):
         """
         self.sample_rate(1, 8)
 
-    def read_data(self):
+    def read_data(self, rads=False):
         """Read and return data tuple for x, y and z axis
         as signed 16-bit integers.
         """
@@ -86,25 +87,27 @@ class ITG3200(object):
         gy = int_sw_swap(self.bus.read_word_data(self.addr, 0x1f))
         gz = int_sw_swap(self.bus.read_word_data(self.addr, 0x21))
 
-        return gx / 14.375 + self.offset_x, gy / 14.375 + self.offset_y, gz / 14.375 + self.offset_z
+        if rads:
+            to_rads = math.pi / 180
+            return to_rads * (gx / 14.375 + self.offset_x), to_rads * (gy / 14.375 + self.offset_y), to_rads * (gz / 14.375 + self.offset_z)
+        else:
+            return gx / 14.375 + self.offset_x, gy / 14.375 + self.offset_y, gz / 14.375 + self.offset_z
 
     def calibrate(self):
         """ Auto calibrate the device offset. Put the device so as one axe is parallel to the gravity field (usually, put the device on a flat surface) """
-        time.sleep(3)
+        time.sleep(5)
         sumx, sumy, sumz = 0, 0, 0
-        for i in range(1000):
+        for i in range(10000):
             x, y, z = self.read_data()
             sumx += x
             sumy += y
             sumz += z
-        self.offset_x = -sumx / 1000
-        self.offset_y = -sumy / 1000
-        self.offset_z = -sumz / 1000
+        self.offset_x = -sumx / 10000
+        self.offset_y = -sumy / 10000
+        self.offset_z = -sumz / 10000
 
 
 if __name__ == '__main__':
-    import time
-
     sensor = ITG3200()  # update with your bus number and address
 
     while True:
