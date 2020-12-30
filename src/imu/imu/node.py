@@ -28,7 +28,7 @@ class IMUPublisher(Node):
         self.declare_parameter('hmc5883l.declination')
         self.dt = self.declare_parameter('dt').get_parameter_value().double_value
 
-        self.beta = 1  # math.sqrt(3 / 4) * math.pi * (10 / 180)
+        self.beta = math.sqrt(3 / 4) * math.pi * (0 / 180)
         self.orientation = Quaternion(w=1.0)
 
         self.smbus = self.get_parameter('smbus').get_parameter_value().integer_value
