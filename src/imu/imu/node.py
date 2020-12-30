@@ -70,7 +70,7 @@ class IMUPublisher(Node):
 
     def poll(self):
         acc = self.accelerometer.read_data(scale=True)
-        gyr = self.gyroscope.read_data()
+        gyr = self.gyroscope.read_data(rads=True)
         mag = self.compass.read_data()
 
         self.orientation = self.MadgwickQuaternionUpdate(*acc, *gyr, *mag)

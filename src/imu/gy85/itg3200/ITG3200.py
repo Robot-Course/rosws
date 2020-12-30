@@ -97,14 +97,14 @@ class ITG3200(object):
         """ Auto calibrate the device offset. Put the device so as one axe is parallel to the gravity field (usually, put the device on a flat surface) """
         time.sleep(5)
         sumx, sumy, sumz = 0, 0, 0
-        for i in range(10000):
+        for i in range(1000):
             x, y, z = self.read_data()
             sumx += x
             sumy += y
             sumz += z
-        self.offset_x = -sumx / 10000
-        self.offset_y = -sumy / 10000
-        self.offset_z = -sumz / 10000
+        self.offset_x = -sumx / 1000
+        self.offset_y = -sumy / 1000
+        self.offset_z = -sumz / 1000
 
 
 if __name__ == '__main__':
