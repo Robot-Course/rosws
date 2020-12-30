@@ -29,7 +29,7 @@ class IMUPublisher(Node):
         self.dt = self.declare_parameter('dt').get_parameter_value().double_value
 
         self.beta = math.sqrt(3 / 4) * math.pi * (10 / 180)
-        self.orientation = Quaternion(w=1.0)
+        self.orientation = Quaternion()
 
         self.smbus = self.get_parameter('smbus').get_parameter_value().integer_value
 
@@ -52,21 +52,6 @@ class IMUPublisher(Node):
         self.imu_publisher = self.create_publisher(Imu, 'imu', QoSProfile(depth=100))
         self.tf_publisher = TransformBroadcaster(self)
         self.timer = self.create_timer(self.dt, self.poll)
-
-    def eular_to_quaternion(self, x, y, z):
-        eular = [x * math.pi / 180 / 2, y * math.pi / 180 / 2, -z * math.pi / 180 / 2]
-        
-        ca, cb, cc = math.cos(eular[0]), math.cos(eular[1]), math.cos(eular[2])
-        sa, sb, sc = math.sin(eular[0]), math.sin(eular[1]), math.sin(eular[2])
-        
-        x = sa*cb*cc - ca*sb*sc
-        y = ca*sb*cc + sa*cb*sc
-        z = ca*cb*sc - sa*sb*cc
-        w = ca*cb*cc + sa*sb*sc
-
-        orientation = Quaternion()
-        orientation.x, orientation.y, orientation.z, orientation.w = x, y, z, w
-        return orientation
 
     def poll(self):
         acc = self.accelerometer.read_data(scale=True)
