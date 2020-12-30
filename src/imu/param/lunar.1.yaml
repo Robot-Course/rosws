@@ -16,4 +16,8 @@ imu_publisher:
       gauss: 1.3
       declination: [-5, 47]
 
-    dt: 0.02
+    filter:
+      do_bias_estimation: True
+      do_adaptive_gain: True
+      gain_acc: 0.01
+      gain_mag: 0.01
