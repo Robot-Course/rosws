@@ -8,3 +8,6 @@ log
 *.iml
 out
 gen
+
+# Unused pacakge
+src/uwb

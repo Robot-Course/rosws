@@ -15,7 +15,7 @@ def generate_launch_description():
         DeclareLaunchArgument('imu', default_value='false'),
         Node(
             package='imu',
-            node_executable='node',
+            executable='node',
             parameters=[LaunchConfiguration('imu_param_file',
                                             default=os.path.join(get_package_share_directory('imu'), 'param',
                                                                  ROBOT_MODEL + '.yaml'))],
@@ -25,7 +25,7 @@ def generate_launch_description():
         DeclareLaunchArgument('motor', default_value='false'),
         Node(
             package='motor',
-            node_executable='node',
+            executable='node',
             parameters=[LaunchConfiguration('motor_param_file',
                                             default=os.path.join(get_package_share_directory('motor'), 'param',
                                                                  ROBOT_MODEL + '.yaml'))],
@@ -35,7 +35,7 @@ def generate_launch_description():
         DeclareLaunchArgument('lidar', default_value='false'),
         Node(
             package='lidar',
-            node_executable='delta_lidar_node',
+            executable='delta_lidar_node',
             parameters=[LaunchConfiguration('lidar_param_file',
                                             default=os.path.join(get_package_share_directory('lidar'),'param',
                                                                  ROBOT_MODEL + '.yaml'))],
@@ -45,7 +45,7 @@ def generate_launch_description():
         DeclareLaunchArgument('joystick', default_value='false'),
         Node(
             package='joystick_controller',
-            node_executable='node',
+            executable='node',
             parameters=[LaunchConfiguration('joystick_param_file',
                                             default=os.path.join(get_package_share_directory('joystick_controller'),
                                                                  'param',
@@ -56,7 +56,7 @@ def generate_launch_description():
         DeclareLaunchArgument('camera', default_value='false'),
         Node(
             package='camera',
-            node_executable='node',
+            executable='node',
             condition=IfCondition(LaunchConfiguration('camera'))
         )
     ]
