@@ -44,6 +44,7 @@ class IMUPublisher(Node):
         self.get_logger().info('Calibrating gyroscope...')
         self.gyroscope.calibrate()
         self.get_logger().info('Calibrated gyroscope.')
+        self.get_logger().info(self.gyroscope.offset_x, self.gyroscope.offset_y, self.gyroscope.offset_z)
         self.compass = HMC5883L(self.smbus, self.get_parameter('hmc5883l.addr').get_parameter_value().integer_value,
                                 gauss=self.get_parameter('hmc5883l.gauss').get_parameter_value().double_value,
                                 declination=self.get_parameter('hmc5883l.declination').get_parameter_value().integer_array_value)
