@@ -83,19 +83,19 @@ class IMUPublisher(Node):
     def poll(self):
         acc = self.accelerometer.read_data(scale=True)
         gyr = self.gyroscope.read_data()
-        mag = self.compass.read_data()
-        self.filter.update(*acc, *gyr, *mag, self.constant_dt)
-
-        orientation = Quaternion()
-        orientation.w, orientation.x, orientation.y, orientation.z = self.filter.getOrientation()
-        # roll = math.atan2(acc[1], acc[2]) * 180 / math.pi
-        # pitch = math.atan2(-acc[0], math.sqrt(acc[1] * acc[1] + acc[2] * acc[2])) * 180 / math.pi
-        # yaw = self.compass.heading(pitch * math.pi / 180, roll * math.pi / 180)
+        # mag = self.compass.read_data()
+        # self.filter.update(*acc, *gyr, *mag, self.constant_dt)
+        #
+        # orientation = Quaternion()
+        # orientation.w, orientation.x, orientation.y, orientation.z = self.filter.getOrientation()
+        roll = math.atan2(acc[1], acc[2]) * 180 / math.pi
+        pitch = math.atan2(-acc[0], math.sqrt(acc[1] * acc[1] + acc[2] * acc[2])) * 180 / math.pi
+        yaw = self.compass.heading(pitch * math.pi / 180, roll * math.pi / 180)
 
         imu = Imu()
         imu.header.stamp = self.get_clock().now().to_msg()
         imu.header.frame_id = 'imu'
-        imu.orientation = orientation
+        imu.orientation = self.eular_to_quaternion(roll, pitch, yaw)
         imu.angular_velocity = Vector3(x=gyr[0], y=gyr[1], z=gyr[2])
         imu.linear_acceleration = Vector3(x=acc[0], y=acc[1], z=acc[2])
         imu.orientation_covariance[0] = self.orientation_variance
@@ -108,10 +108,10 @@ class IMUPublisher(Node):
         imu.orientation_covariance[7] = 0.0
         imu.orientation_covariance[8] = self.orientation_variance
 
-        if self.filter.getDoBiasEstimation():
-            imu.angular_velocity.x -= self.filter.getAngularVelocityBiasX()
-            imu.angular_velocity.y -= self.filter.getAngularVelocityBiasY()
-            imu.angular_velocity.z -= self.filter.getAngularVelocityBiasZ()
+        # if self.filter.getDoBiasEstimation():
+        #     imu.angular_velocity.x -= self.filter.getAngularVelocityBiasX()
+        #     imu.angular_velocity.y -= self.filter.getAngularVelocityBiasY()
+        #     imu.angular_velocity.z -= self.filter.getAngularVelocityBiasZ()
 
         self.imu_publisher.publish(imu)
 
