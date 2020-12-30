@@ -84,7 +84,7 @@ class IMUPublisher(Node):
         acc = self.accelerometer.read_data()
         gyr = self.gyroscope.read_data()
         mag = self.compass.read_data()
-        self.filter.update(acc.x, acc.y, acc.z, gyr.x, gyr.y, gyr.z, mag.x, mag.y, mag.z, self.constant_dt)
+        self.filter.update(*acc, *gyr, *mag, self.constant_dt)
 
         orientation = Quaternion()
         orientation.w, orientation.x, orientation.y, orientation.z = self.filter.getOrientation()
