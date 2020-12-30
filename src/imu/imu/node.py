@@ -81,12 +81,9 @@ class IMUPublisher(Node):
         return orientation
 
     def poll(self):
-        acc = self.accelerometer.read_data()
+        acc = self.accelerometer.read_data(scale=True)
         gyr = self.gyroscope.read_data()
         mag = self.compass.read_data()
-        acc[0] *= 9.8
-        acc[1] *= 9.8
-        acc[2] *= 9.8
         self.filter.update(*acc, *gyr, *mag, self.constant_dt)
 
         orientation = Quaternion()

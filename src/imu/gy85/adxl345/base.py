@@ -193,12 +193,12 @@ class ADXL345_Base:
         self._full_resolution = full_resolution
         self._send_data_format()
 
-    def read_data(self):
+    def read_data(self, scale=False):
         """ return values for the 3 axes of the ADXL, expressed in g (multiple of earth gravity) """
         bytes = self.get_registers(ADXL345_Base.REG_DATAX0, 6)
-        x = self._convert(bytes[0], bytes[1])
-        y = self._convert(bytes[2], bytes[3])
-        z = self._convert(bytes[4], bytes[5])
+        x = self._convert(bytes[0], bytes[1]) * (9.81 if scale else 1)
+        y = self._convert(bytes[2], bytes[3]) * (9.81 if scale else 1)
+        z = self._convert(bytes[4], bytes[5]) * (9.81 if scale else 1)
         return (x, y, z)
 
     def get_fifo_count(self):
