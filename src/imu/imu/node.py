@@ -75,10 +75,6 @@ class IMUPublisher(Node):
 
         self.orientation = self.MadgwickQuaternionUpdate(*acc, *gyr, *mag)
 
-        # roll = math.atan2(acc[1], acc[2]) * 180 / math.pi
-        # pitch = math.atan2(-acc[0], math.sqrt(acc[1] * acc[1] + acc[2] * acc[2])) * 180 / math.pi
-        # yaw = self.compass.heading(pitch * math.pi / 180, roll * math.pi / 180)
-
         imu = Imu()
         imu.header.stamp = self.get_clock().now().to_msg()
         imu.header.frame_id = 'imu'
