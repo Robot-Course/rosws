@@ -99,6 +99,7 @@ class ITG3200(object):
         self.offset_x = -sumx / 10
         self.offset_y = -sumy / 10
         self.offset_z = -sumz / 10
+        print(self.offset_x, self.offset_y, self.offset_z)
 
 
 if __name__ == '__main__':

@@ -37,9 +37,13 @@ class IMUPublisher(Node):
         self.accelerometer.set_data_rate(self.get_parameter('adxl345.data_rate').get_parameter_value().integer_value)
         self.accelerometer.set_range(self.get_parameter('adxl345.g_range').get_parameter_value().integer_value, self.get_parameter('adxl345.full_resolution').get_parameter_value().bool_value)
         self.accelerometer.power_on()
+        self.get_logger().info('Calibrating accelerometer...')
         self.accelerometer.calibrate()
+        self.get_logger().info('Calibrated accelerometer.')
         self.gyroscope = ITG3200(self.smbus, self.get_parameter('itg3200.addr').get_parameter_value().integer_value)
+        self.get_logger().info('Calibrating gyroscope...')
         self.gyroscope.calibrate()
+        self.get_logger().info('Calibrated gyroscope.')
         self.compass = HMC5883L(self.smbus, self.get_parameter('hmc5883l.addr').get_parameter_value().integer_value,
                                 gauss=self.get_parameter('hmc5883l.gauss').get_parameter_value().double_value,
                                 declination=self.get_parameter('hmc5883l.declination').get_parameter_value().integer_array_value)
