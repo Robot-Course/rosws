@@ -4,8 +4,8 @@ from gpiozero import DigitalInputDevice
 class Encoder:
 
     def __init__(self, node, a, b, precision, read_interval=0.05, reverse=False):
-        self.a = DigitalInputDevice(a, pull_up=None)
-        self.b = DigitalInputDevice(b, pull_up=None)
+        self.a = DigitalInputDevice(a, pull_up=None, active_state=True)
+        self.b = DigitalInputDevice(b, pull_up=None, active_state=True)
 
         self.a.pin.edges = 'falling'
         self.a.pin.when_changed = self._on_falling_edge
@@ -21,7 +21,7 @@ class Encoder:
     def close(self):
         self.a.pin.when_changed = None
 
-    def _on_falling_edge(self):
+    def _on_falling_edge(self, ticks, state):
         if self.b.value == 1:
             self.pulses += 1
         else:

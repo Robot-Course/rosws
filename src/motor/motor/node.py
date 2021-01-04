@@ -3,7 +3,7 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile
 import math
 
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, Vector3
 from gpiozero import Motor
 
 from .encoder import Encoder
@@ -68,7 +68,7 @@ class MotorPublisher(Node):
         self.last_error_l = 0
         self.last_error_r = 0
 
-        # self.test = open('/home/ubuntu/x.txt', 'w')
+        # self.pub = self.create_publisher(Vector3, 'pid', qos_profile=QoSProfile(depth=100))
 
     def pid_motor(self):
         error_l = self.target_l_rpm - self.motor_left_encoder.read_rpm
@@ -80,7 +80,7 @@ class MotorPublisher(Node):
         self.sum_error_r = self.sum_error_r + error_r
         corrected_r = self.kp * error_r + self.ki * self.sum_error_r + self.kd * (error_r - self.last_error_r)
         self.last_error_r = error_r
-        # self.test.write('%f,%f\n' % (error_l, error_r))
+        # self.pub.publish(Vector3(x=error_l))
         l_rpm = self.motor_left_encoder.read_rpm + corrected_l
         r_rpm = self.motor_right_encoder.read_rpm + corrected_r
 
@@ -122,7 +122,6 @@ class MotorPublisher(Node):
         self.motor_right.close()
         self.motor_left_encoder.close()
         self.motor_right_encoder.close()
-        # self.test.close()
 
 
 def main(args=None):
