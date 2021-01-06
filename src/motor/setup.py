@@ -12,7 +12,7 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/param', glob.glob('param/*')),
     ],
-    install_requires=['setuptools', 'gpiozero'],
+    install_requires=['setuptools', 'gpiozero', 'simple-pid'],
     zip_safe=True,
     maintainer='grisw',
     maintainer_email='grisw@todo.todo',

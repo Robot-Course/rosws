@@ -2,8 +2,10 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 import math
+from simple_pid import PID
 
-from geometry_msgs.msg import Twist, Vector3
+from motor_msgs.msg import Encoder as Encoder_msg
+from geometry_msgs.msg import Twist
 from gpiozero import Motor
 
 from .encoder import Encoder
@@ -32,9 +34,9 @@ class MotorPublisher(Node):
         self.declare_parameter('motor.right.encoder.a')
         self.declare_parameter('motor.right.encoder.b')
 
-        self.kp = self.get_parameter('pid.kp').get_parameter_value().double_value
-        self.ki = self.get_parameter('pid.ki').get_parameter_value().double_value
-        self.kd = self.get_parameter('pid.kd').get_parameter_value().double_value
+        kp = self.get_parameter('pid.kp').get_parameter_value().double_value
+        ki = self.get_parameter('pid.ki').get_parameter_value().double_value
+        kd = self.get_parameter('pid.kd').get_parameter_value().double_value
         self.max_linear = self.get_parameter('max_linear').get_parameter_value().double_value
         self.max_angular = self.get_parameter('max_angular').get_parameter_value().double_value
         self.wheel_separation = self.get_parameter('wheels.separation').get_parameter_value().double_value
@@ -50,53 +52,49 @@ class MotorPublisher(Node):
                                           self.get_parameter('motor.left.encoder.a').get_parameter_value().integer_value,
                                           self.get_parameter('motor.left.encoder.b').get_parameter_value().integer_value,
                                           self.get_parameter('motor.precision').get_parameter_value().integer_value,
+                                          read_interval=0.3,
                                           reverse=True)
         self.motor_right_encoder = Encoder(self,
                                            self.get_parameter('motor.right.encoder.a').get_parameter_value().integer_value,
                                            self.get_parameter('motor.right.encoder.b').get_parameter_value().integer_value,
-                                           self.get_parameter('motor.precision').get_parameter_value().integer_value)
+                                           self.get_parameter('motor.precision').get_parameter_value().integer_value,
+                                           read_interval=0.3)
 
         self.cmd_vel_subscription = self.create_subscription(Twist, 'cmd_vel', self.cmd_vel, QoSProfile(depth=100))
+        self.encoder_pub = self.create_publisher(Encoder_msg, 'encoder', qos_profile=QoSProfile(depth=100))
 
-        self.timer = self.create_timer(0.1, self.pid_motor)
+        self.create_timer(0.3, self.publish_encoders)
+        self.create_timer(0.5, self.pid_motor)
 
-        self.target_l_rpm = 0
-        self.target_r_rpm = 0
+        self.pid_l = PID(kp, ki, kd, sample_time=0.5)
+        self.pid_r = PID(kp, ki, kd, sample_time=0.5)
+        self.l_rpm = 0.
+        self.r_rpm = 0.
 
-        self.sum_error_l = 0
-        self.sum_error_r = 0
-        self.last_error_l = 0
-        self.last_error_r = 0
-
-        # self.pub = self.create_publisher(Vector3, 'pid', qos_profile=QoSProfile(depth=100))
+    def publish_encoders(self):
+        self.encoder_pub.publish(Encoder_msg(l_rpm=self.motor_left_encoder.read_rpm, r_rpm=self.motor_right_encoder.read_rpm))
 
     def pid_motor(self):
-        error_l = self.target_l_rpm - self.motor_left_encoder.read_rpm
-        self.sum_error_l = self.sum_error_l + error_l
-        corrected_l = self.kp * error_l + self.ki * self.sum_error_l + self.kd * (error_l - self.last_error_l)
-        self.last_error_l = error_l
+        self.l_rpm += self.pid_l(self.motor_left_encoder.read_rpm)
+        self.r_rpm += self.pid_r(self.motor_right_encoder.read_rpm)
 
-        error_r = self.target_r_rpm - self.motor_right_encoder.read_rpm
-        self.sum_error_r = self.sum_error_r + error_r
-        corrected_r = self.kp * error_r + self.ki * self.sum_error_r + self.kd * (error_r - self.last_error_r)
-        self.last_error_r = error_r
-        # self.pub.publish(Vector3(x=error_l))
-        l_rpm = self.motor_left_encoder.read_rpm + corrected_l
-        r_rpm = self.motor_right_encoder.read_rpm + corrected_r
-
-        if self.target_l_rpm == 0 or l_rpm == 0:
+        if self.pid_l.setpoint == 0:
             self.motor_left.stop()
-        elif l_rpm > 0:
-            self.motor_left.forward(min(abs(l_rpm) / self.rpm, 1))
-        elif l_rpm < 0:
-            self.motor_left.backward(min(abs(l_rpm) / self.rpm, 1))
+            self.pid_l.reset()
+            self.l_rpm = 0
+        elif self.l_rpm > 0:
+            self.motor_left.forward(min(abs(self.l_rpm) / self.rpm, 1))
+        elif self.l_rpm < 0:
+            self.motor_left.backward(min(abs(self.l_rpm) / self.rpm, 1))
 
-        if self.target_r_rpm == 0 or r_rpm == 0:
+        if self.pid_r.setpoint == 0:
             self.motor_right.stop()
-        elif r_rpm > 0:
-            self.motor_right.forward(min(abs(r_rpm) / self.rpm, 1))
-        elif r_rpm < 0:
-            self.motor_right.backward(min(abs(r_rpm) / self.rpm, 1))
+            self.pid_r.reset()
+            self.r_rpm = 0
+        elif self.r_rpm > 0:
+            self.motor_right.forward(min(abs(self.r_rpm) / self.rpm, 1))
+        elif self.r_rpm < 0:
+            self.motor_right.backward(min(abs(self.r_rpm) / self.rpm, 1))
 
     def solve_wheel_speed(self, linear, angular):
         l_vl = linear + angular * self.wheel_separation / 2.0
@@ -110,12 +108,10 @@ class MotorPublisher(Node):
     def cmd_vel(self, msg):
         linear = max(min(self.max_linear, msg.linear.x), -self.max_linear)
         angular = max(min(self.max_angular, msg.angular.z), -self.max_angular)
-        self.target_l_rpm, self.target_r_rpm = self.solve_wheel_speed(linear, angular)
-        self.sum_error_l = 0
-        self.sum_error_r = 0
+        self.pid_l.setpoint, self.pid_r.setpoint = self.solve_wheel_speed(linear, angular)
 
-        self.get_logger().info('[MAIN] L: %.2f, A: %.2f' % (linear, angular))
-        self.get_logger().info('[SOLVED] L: %.2f, R: %.2f' % (self.target_l_rpm, self.target_r_rpm))
+        self.get_logger().info('[CMD_VEL] L: %.2f, A: %.2f' % (linear, angular))
+        self.get_logger().info('[SOLVED] L: %.2f, R: %.2f' % (self.pid_l.setpoint, self.pid_r.setpoint))
 
     def close(self):
         self.motor_left.close()
