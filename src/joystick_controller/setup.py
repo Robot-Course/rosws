@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, glob
 
 package_name = 'joystick_controller'
 
@@ -10,6 +10,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/param', glob.glob('param/*')),
     ],
     install_requires=['setuptools', 'evdev'],
     zip_safe=True,

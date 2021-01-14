@@ -4,8 +4,11 @@ from rclpy.qos import QoSProfile
 import math
 from simple_pid import PID
 
-from motor_msgs.msg import Encoder as Encoder_msg
-from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Twist, TransformStamped
+from sensor_msgs.msg import Imu
+from std_msgs.msg import Empty
+from tf2_ros import TransformBroadcaster
 from gpiozero import Motor
 
 from .encoder import Encoder
@@ -61,9 +64,11 @@ class MotorPublisher(Node):
                                            read_interval=0.3)
 
         self.cmd_vel_subscription = self.create_subscription(Twist, 'cmd_vel', self.cmd_vel, QoSProfile(depth=100))
-        self.encoder_pub = self.create_publisher(Encoder_msg, 'encoder', qos_profile=QoSProfile(depth=100))
+        self.imu_subscription = self.create_subscription(Imu, 'imu', self.read_imu, QoSProfile(depth=100))
+        self.reset_subscription = self.create_subscription(Empty, 'reset', self.reset, QoSProfile(depth=100))
+        self.odom_pub = self.create_publisher(Odometry, 'odom', qos_profile=QoSProfile(depth=100))
+        self.tf_broadcaster = TransformBroadcaster(self)
 
-        self.create_timer(0.3, self.publish_encoders)
         self.create_timer(0.5, self.pid_motor)
 
         self.pid_l = PID(kp, ki, kd, sample_time=0.5)
@@ -71,8 +76,57 @@ class MotorPublisher(Node):
         self.l_rpm = 0.
         self.r_rpm = 0.
 
-    def publish_encoders(self):
-        self.encoder_pub.publish(Encoder_msg(l_rpm=self.motor_left_encoder.read_rpm, r_rpm=self.motor_right_encoder.read_rpm))
+        self.last_imu_time = 0.
+        self.last_imu_theta = 0.
+        self.odom_pose = [0., 0., 0.]
+
+    def reset(self, _msg):
+        self.odom_pose[0] = 0.
+        self.odom_pose[1] = 0.
+        self.odom_pose[2] = 0.
+
+    def read_imu(self, msg):
+        step_time = (self.get_clock().now().nanoseconds - self.last_imu_time) / 1e9
+        self.last_imu_time = self.get_clock().now().nanoseconds
+
+        wheel_l = self.motor_left_encoder.read_rpm * step_time / 60 * 2 * math.pi
+        wheel_r = self.motor_right_encoder.read_rpm * step_time / 60 * 2 * math.pi
+        delta_s = self.wheel_radius * (wheel_r + wheel_l) / 2.0
+        orientation = msg.orientation
+        theta = math.atan2(orientation.x*orientation.y + orientation.w*orientation.z,
+                           0.5 - orientation.y*orientation.y - orientation.z*orientation.z)
+        delta_theta = theta - self.last_imu_theta
+
+        self.odom_pose[0] += delta_s * math.cos(self.odom_pose[2] + (delta_theta / 2.0))
+        self.odom_pose[1] += delta_s * math.sin(self.odom_pose[2] + (delta_theta / 2.0))
+        self.odom_pose[2] += delta_theta
+
+        v = delta_s / step_time
+        w = delta_theta / step_time
+
+        self.last_imu_theta = theta
+
+        odom = Odometry()
+        odom.header.frame_id = 'odom'
+        odom.child_frame_id = 'base_footprint'
+
+        odom.pose.pose.position.x = self.odom_pose[0]
+        odom.pose.pose.position.y = self.odom_pose[1]
+        odom.pose.pose.position.z = 0.
+        odom.pose.pose.orientation = orientation
+
+        odom.twist.twist.linear.x = v
+        odom.twist.twist.angular.z = w
+        self.odom_pub.publish(odom)
+
+        odom_tf = TransformStamped()
+        odom_tf.header = odom.header
+        odom_tf.child_frame_id = odom.child_frame_id
+        odom_tf.transform.translation.x = odom.pose.pose.position.x
+        odom_tf.transform.translation.y = odom.pose.pose.position.y
+        odom_tf.transform.translation.z = odom.pose.pose.position.z
+        odom_tf.transform.rotation = odom.pose.pose.orientation
+        self.tf_broadcaster.sendTransform(odom_tf)
 
     def pid_motor(self):
         self.l_rpm += self.pid_l(self.motor_left_encoder.read_rpm)

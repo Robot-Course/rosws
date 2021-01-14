@@ -4,6 +4,7 @@ from rclpy.qos import QoSProfile
 import math
 
 from sensor_msgs.msg import Imu
+from std_msgs.msg import Empty
 from geometry_msgs.msg import Quaternion, Vector3, TransformStamped
 from tf2_ros.transform_broadcaster import TransformBroadcaster
 
@@ -50,8 +51,13 @@ class IMUPublisher(Node):
                                 declination=self.get_parameter('hmc5883l.declination').get_parameter_value().integer_array_value)
 
         self.imu_publisher = self.create_publisher(Imu, 'imu', QoSProfile(depth=100))
+        self.reset_subscription = self.create_subscription(Empty, 'reset', self.reset, QoSProfile(depth=100))
         self.tf_publisher = TransformBroadcaster(self)
         self.timer = self.create_timer(self.dt, self.poll)
+
+    def reset(self, _msg):
+        self.accelerometer.calibrate()
+        self.gyroscope.calibrate()
 
     def poll(self):
         acc = self.accelerometer.read_data(scale=True)
