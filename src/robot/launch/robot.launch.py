@@ -58,6 +58,15 @@ def generate_launch_description():
             package='camera',
             executable='node',
             condition=IfCondition(LaunchConfiguration('camera'))
+        ),
+
+        DeclareLaunchArgument('localization', default_value='false'),
+        Node(
+            package='robot_localization',
+            executable='ekf_node',
+            name='ekf_filter_node',
+            parameters=[os.path.join(get_package_share_directory('robot'), 'param', 'robot_localization.yaml')],
+            condition=IfCondition(LaunchConfiguration('localization'))
         )
     ]
 

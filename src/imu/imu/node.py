@@ -5,8 +5,7 @@ import math
 
 from sensor_msgs.msg import Imu
 from std_msgs.msg import Empty
-from geometry_msgs.msg import Quaternion, Vector3, TransformStamped
-from tf2_ros.transform_broadcaster import TransformBroadcaster
+from geometry_msgs.msg import Quaternion, Vector3
 
 from gy85.adxl345.i2c import ADXL345
 from gy85.hmc5883l.HMC5883L import HMC5883L
@@ -52,7 +51,6 @@ class IMUPublisher(Node):
 
         self.imu_publisher = self.create_publisher(Imu, 'imu', QoSProfile(depth=100))
         self.reset_subscription = self.create_subscription(Empty, 'reset', self.reset, QoSProfile(depth=100))
-        self.tf_publisher = TransformBroadcaster(self)
         self.timer = self.create_timer(self.dt, self.poll)
 
     def reset(self, _msg):
@@ -68,19 +66,20 @@ class IMUPublisher(Node):
 
         imu = Imu()
         imu.header.stamp = self.get_clock().now().to_msg()
-        imu.header.frame_id = 'imu'
+        imu.header.frame_id = 'base_footprint'
         imu.orientation = self.orientation
         imu.angular_velocity = Vector3(x=gyr[0], y=gyr[1], z=gyr[2])
         imu.linear_acceleration = Vector3(x=acc[0], y=acc[1], z=acc[2])
+        imu.orientation_covariance = [0.04, 0,    0,
+                                      0,    0.04, 0,
+                                      0,    0,    0.04]
+        imu.angular_velocity_covariance = [0.04, 0,    0,
+                                           0,    0.04, 0,
+                                           0,    0,    0.04]
+        imu.linear_acceleration_covariance = [0.01, 0,    0,
+                                              0,    0.01, 0,
+                                              0,    0,    0.01]
         self.imu_publisher.publish(imu)
-
-        tf = TransformStamped()
-        tf.transform.translation = Vector3(x=.0, y=.0, z=.0)
-        tf.transform.rotation = imu.orientation
-        tf.header.stamp = imu.header.stamp
-        tf.header.frame_id = 'base_link'
-        tf.child_frame_id = 'imu'
-        self.tf_publisher.sendTransform(tf)
 
     def MadgwickQuaternionUpdate(self, ax, ay, az, gx, gy, gz, mx, my, mz):
         q1, q2, q3, q4 = self.orientation.w, self.orientation.x, self.orientation.y, self.orientation.z

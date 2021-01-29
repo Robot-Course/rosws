@@ -8,6 +8,7 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, TransformStamped
 from sensor_msgs.msg import Imu
 from std_msgs.msg import Empty
+from motor_msgs.msg import Encoder as EncoderMsg
 from tf2_ros import TransformBroadcaster
 from gpiozero import Motor
 
@@ -67,6 +68,7 @@ class MotorPublisher(Node):
         self.imu_subscription = self.create_subscription(Imu, 'imu', self.read_imu, QoSProfile(depth=100))
         self.reset_subscription = self.create_subscription(Empty, 'reset', self.reset, QoSProfile(depth=100))
         self.odom_pub = self.create_publisher(Odometry, 'odom', qos_profile=QoSProfile(depth=100))
+        self.encoder_pub = self.create_publisher(EncoderMsg, 'encoder', qos_profile=QoSProfile(depth=100))
         self.tf_broadcaster = TransformBroadcaster(self)
 
         self.create_timer(0.5, self.pid_motor)
@@ -107,6 +109,7 @@ class MotorPublisher(Node):
         self.last_imu_theta = theta
 
         odom = Odometry()
+        odom.header.stamp = self.get_clock().now().to_msg()
         odom.header.frame_id = 'odom'
         odom.child_frame_id = 'base_footprint'
 
@@ -114,9 +117,22 @@ class MotorPublisher(Node):
         odom.pose.pose.position.y = self.odom_pose[1]
         odom.pose.pose.position.z = 0.
         odom.pose.pose.orientation = orientation
+        odom.pose.covariance = [0.01, 0,    0, 0,    0,    0,
+                                0,    0.01, 0, 0,    0,    0,
+                                0,    0,    0, 0,    0,    0,
+                                0,    0,    0, 0.04, 0,    0,
+                                0,    0,    0, 0,    0.04, 0,
+                                0,    0,    0, 0,    0,    0.04]
 
         odom.twist.twist.linear.x = v
         odom.twist.twist.angular.z = w
+        odom.twist.covariance = [0.01, 0, 0, 0, 0, 0,
+                                 0,    0, 0, 0, 0, 0,
+                                 0,    0, 0, 0, 0, 0,
+                                 0,    0, 0, 0, 0, 0,
+                                 0,    0, 0, 0, 0, 0,
+                                 0,    0, 0, 0, 0, 0.02]
+
         self.odom_pub.publish(odom)
 
         odom_tf = TransformStamped()
@@ -131,6 +147,11 @@ class MotorPublisher(Node):
     def pid_motor(self):
         self.l_rpm += self.pid_l(self.motor_left_encoder.read_rpm)
         self.r_rpm += self.pid_r(self.motor_right_encoder.read_rpm)
+
+        self.encoder_pub.publish(EncoderMsg(l_rpm=self.motor_left_encoder.read_rpm,
+                                            r_rpm=self.motor_right_encoder.read_rpm,
+                                            l_target=self.pid_l.setpoint,
+                                            r_target=self.pid_r.setpoint))
 
         if self.pid_l.setpoint == 0:
             self.motor_left.stop()
